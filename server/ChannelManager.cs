@@ -2,7 +2,9 @@ namespace IrcNetCoreServer
 {
     public class ChannelManager
     {
-        private readonly Dictionary<string, Channel> _channels = new();
+        private readonly Dictionary<string, Channel> _channels = new(){
+            {"#test", new Channel("#test", new User("test"))}
+        };
 
         public void JoinOrCreateChannel(string channelName, User user)
         {
@@ -36,6 +38,11 @@ namespace IrcNetCoreServer
 
             var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, userToPromote);
             foundUserToPromoteWithRole.Role = roleToPromoteTo;
+        }
+
+        public List<string> GetChannelsList()
+        {
+            return _channels.Keys.ToList();
         }
 
         private void RemoveUserFromChannel(Channel channel, UserWithRole userWithRole)

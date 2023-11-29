@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using IrcNetCore.Common;
+using IrcNetCoreServer.Events;
 
 namespace IrcNetCoreServer
 {
@@ -8,6 +10,7 @@ namespace IrcNetCoreServer
     {
         private readonly string _IpAddress;
         private readonly int _Port;
+        public event EventHandler<CommandReceivedEventArgs>? OnCommandReceived;
         public SocketListener(string ipAddress, int port)
         {
             _IpAddress = ipAddress;
@@ -28,7 +31,7 @@ namespace IrcNetCoreServer
             {
                 var clientSocket = listenerSocket.Accept();
                 Console.WriteLine($"Client {clientSocket.RemoteEndPoint} connected.");
-                clientSocket.Send(Encoding.ASCII.GetBytes("Hello from server!"));
+                // clientSocket.Send(Encoding.ASCII.GetBytes("Hello from server!"));
                 //create a new thread to receive messages from the client
                 Thread thread = new(() => ReceiveMessage(clientSocket));
                 thread.Start();
@@ -37,6 +40,8 @@ namespace IrcNetCoreServer
 
         private void ReceiveMessage(Socket clientSocket)
         {
+            // Send ACK to client, so it knows that it can send messages
+            clientSocket.Send(Encoding.ASCII.GetBytes(Commands.ACK_COMMAND));
             while (true)
             {
                 byte[] buffer = new byte[1024];
@@ -48,8 +53,8 @@ namespace IrcNetCoreServer
                     Console.WriteLine($"Client {clientSocket.RemoteEndPoint} disconnected.");
                     break;
                 }
-
                 Console.WriteLine($"{clientSocket.RemoteEndPoint}: {message}");
+                // OnCommandReceived?.Invoke(this, new CommandReceivedEventArgs(clientSocket, message));
             }
         }
 
