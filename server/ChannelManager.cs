@@ -1,4 +1,4 @@
-namespace IrcNetCore.Server
+namespace IrcNetCoreServer
 {
     public class ChannelManager
     {
