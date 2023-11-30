@@ -1,14 +1,13 @@
-namespace IrcNetCoreServer
-{
-    public class UserWithRole
-    {
-        public UserWithRole(User user, UserRole role)
-        {
-            User = user;
-            Role = role;
-        }
+namespace IrcNetCoreServer;
 
-        public User User { get; set; }
-        public UserRole Role { get; set; }
+public class UserWithRole
+{
+    public UserWithRole(User user, UserRole role)
+    {
+        User = user;
+        Role = role;
     }
+
+    public User User { get; set; }
+    public UserRole Role { get; set; }
 }

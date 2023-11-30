@@ -1,83 +1,86 @@
-namespace IrcNetCoreServer
+namespace IrcNetCoreServer;
+
+public class ChannelManager
 {
-    public class ChannelManager
-    {
-        private readonly Dictionary<string, Channel> _channels = new(){
-            {"#test", new Channel("#test", new User("test"))}
+    private readonly Dictionary<string, Channel> _channels = new(){
+            {"Channel1", new Channel("Channel1", new User("test"))},
+            {"Channel2", new Channel("Channel2", new User("test2"))},
+            {"Channel3", new Channel("Channel3", new User("test3"))},
+
+
         };
 
-        public void JoinOrCreateChannel(string channelName, User user)
+    public void JoinOrCreateChannel(string channelName, User user)
+    {
+        var foundChannel = _channels[channelName];
+        if (foundChannel == null)
         {
-            var foundChannel = _channels[channelName];
-            if (foundChannel == null)
-            {
-                _channels.Add(channelName, new Channel(channelName, user));
-            }
-            else
-            {
-                foundChannel.UsersWithRoles.Add(new UserWithRole(user, UserRole.User));
-            }
+            _channels.Add(channelName, new Channel(channelName, user));
+        }
+        else
+        {
+            foundChannel.UsersWithRoles.Add(new UserWithRole(user, UserRole.User));
+        }
+    }
+
+    public void RemoveUserFromChannel(string channelName, User user)
+    {
+        var foundChannel = GetChannel(channelName);
+        var foundUserWithRole = GetUserWithRole(foundChannel, user);
+
+        RemoveUserFromChannel(foundChannel, foundUserWithRole);
+    }
+
+    public void PromoteUser(string channelName, User promotingUser, User userToPromote, UserRole roleToPromoteTo)
+    {
+        var foundChannel = GetChannel(channelName);
+        var foundPromotingUserWithRole = GetUserWithRole(foundChannel, promotingUser);
+        if (foundPromotingUserWithRole.Role != UserRole.Admin)
+        {
+            throw new Exception($"User {promotingUser.Username} is not an admin in channel {channelName}");
         }
 
-        public void RemoveUserFromChannel(string channelName, User user)
-        {
-            var foundChannel = GetChannel(channelName);
-            var foundUserWithRole = GetUserWithRole(foundChannel, user);
+        var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, userToPromote);
+        foundUserToPromoteWithRole.Role = roleToPromoteTo;
+    }
 
-            RemoveUserFromChannel(foundChannel, foundUserWithRole);
+    public List<string> GetChannelsList()
+    {
+        return _channels.Keys.ToList();
+    }
+
+    private void RemoveUserFromChannel(Channel channel, UserWithRole userWithRole)
+    {
+        if (channel.UsersWithRoles.Count == 1)
+        {
+            _channels.Remove(channel.Name);
         }
-
-        public void PromoteUser(string channelName, User promotingUser, User userToPromote, UserRole roleToPromoteTo)
+        else
         {
-            var foundChannel = GetChannel(channelName);
-            var foundPromotingUserWithRole = GetUserWithRole(foundChannel, promotingUser);
-            if (foundPromotingUserWithRole.Role != UserRole.Admin)
+            if (userWithRole.Role == UserRole.Admin)
             {
-                throw new Exception($"User {promotingUser.Username} is not an admin in channel {channelName}");
-            }
-
-            var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, userToPromote);
-            foundUserToPromoteWithRole.Role = roleToPromoteTo;
-        }
-
-        public List<string> GetChannelsList()
-        {
-            return _channels.Keys.ToList();
-        }
-
-        private void RemoveUserFromChannel(Channel channel, UserWithRole userWithRole)
-        {
-            if (channel.UsersWithRoles.Count == 1)
-            {
-                _channels.Remove(channel.Name);
-            }
-            else
-            {
-                if (userWithRole.Role == UserRole.Admin)
+                var newAdmin = channel.UsersWithRoles.SingleOrDefault(a => a.Role == UserRole.Moderator)
+                            ?? channel.UsersWithRoles.SingleOrDefault(a => a.Role == UserRole.User);
+                if (newAdmin != null)
                 {
-                    var newAdmin = channel.UsersWithRoles.SingleOrDefault(a => a.Role == UserRole.Moderator)
-                                ?? channel.UsersWithRoles.SingleOrDefault(a => a.Role == UserRole.User);
-                    if (newAdmin != null)
-                    {
-                        newAdmin.Role = UserRole.Admin;
-                    }
+                    newAdmin.Role = UserRole.Admin;
                 }
-                channel.UsersWithRoles.Remove(userWithRole);
             }
+            channel.UsersWithRoles.Remove(userWithRole);
         }
+    }
 
-        private Channel GetChannel(string channelName)
-        {
-            var foundChannel = _channels[channelName]
-                ?? throw new Exception($"Channel {channelName} does not exist");
-            return foundChannel;
-        }
+    private Channel GetChannel(string channelName)
+    {
+        var foundChannel = _channels[channelName]
+            ?? throw new Exception($"Channel {channelName} does not exist");
+        return foundChannel;
+    }
 
-        private static UserWithRole GetUserWithRole(Channel channel, User user)
-        {
-            var foundUserWithRole = channel.UsersWithRoles.SingleOrDefault(a => a.User.Id == user.Id)
-                ?? throw new Exception($"User {user.Username} is not in channel {channel.Name}");
-            return foundUserWithRole;
-        }
+    private static UserWithRole GetUserWithRole(Channel channel, User user)
+    {
+        var foundUserWithRole = channel.UsersWithRoles.SingleOrDefault(a => a.User.Id == user.Id)
+            ?? throw new Exception($"User {user.Username} is not in channel {channel.Name}");
+        return foundUserWithRole;
     }
 }

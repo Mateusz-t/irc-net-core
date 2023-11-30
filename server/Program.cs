@@ -1,13 +1,12 @@
-﻿namespace IrcNetCoreServer
-{
-    class Program
-    {
-        
+﻿namespace IrcNetCoreServer;
 
-        static void Main(string[] args)
-        {
-            ServerManager serverManager = new();
-            serverManager.Run();
-        }
+class Program
+{
+
+
+    static void Main(string[] args)
+    {
+        ServerManager serverManager = new();
+        serverManager.Run();
     }
 }

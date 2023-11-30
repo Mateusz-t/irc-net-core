@@ -1,9 +1,8 @@
-namespace IrcNetCoreServer
+namespace IrcNetCoreServer;
+
+public enum UserRole
 {
-    public enum UserRole
-    {
-        User,
-        Moderator,
-        Admin
-    }
+    User,
+    Moderator,
+    Admin
 }

@@ -32,11 +32,11 @@ namespace IrcNetCoreClient
             Console.WriteLine($"Message sent: {message}");
         }
 
-        public string ReceiveMessage(byte[] buffer)
+        public string ReceiveMessage()
         {
             if (_clientSocket == null)
                 throw new Exception("Socket is not initialized!");
-
+            byte[] buffer = new byte[1024];
             int receivedBytes = _clientSocket.Receive(buffer);
             string message = Encoding.ASCII.GetString(buffer, 0, receivedBytes).Trim();
             //temp
@@ -46,11 +46,11 @@ namespace IrcNetCoreClient
 
         private Socket CreateSocket()
         {
-            Console.WriteLine("Creating socket...");
+            ConsoleManager.WriteInfoMessage("Creating socket...");
             IPAddress ipAddress = IPAddress.Parse(_IpAddress);
             IPEndPoint iPEndPoint = new(ipAddress, _Port);
             Socket clientSocket = new(iPEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            Console.WriteLine("Socket created.");
+            ConsoleManager.WriteInfoMessage("Socket created.");
             return clientSocket;
         }
 

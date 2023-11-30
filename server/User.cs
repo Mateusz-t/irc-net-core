@@ -1,13 +1,12 @@
-namespace IrcNetCoreServer
-{
-    public class User
-    {
-        public User(string username)
-        {
-            Username = username;
-        }
+namespace IrcNetCoreServer;
 
-        public Guid Id { get; private set; } = Guid.NewGuid();
-        public string Username { get; set; }
+public class User
+{
+    public User(string username)
+    {
+        Username = username;
     }
+
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string Username { get; set; }
 }
