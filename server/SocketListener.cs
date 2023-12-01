@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using IrcNetCore.Common.Commands;
+using IrcNetCoreServer.Commands;
+using IrcNetCoreServer.Entities;
 using IrcNetCoreServer.Events;
 
 namespace IrcNetCoreServer;
@@ -31,7 +32,6 @@ public class SocketListener
         {
             var clientSocket = listenerSocket.Accept();
             Console.WriteLine($"Client {clientSocket.RemoteEndPoint} connected.");
-            // clientSocket.Send(Encoding.ASCII.GetBytes("Hello from server!"));
             //create a new thread to receive messages from the client
             Thread thread = new(() => ReceiveMessage(clientSocket));
             thread.Start();
@@ -40,9 +40,10 @@ public class SocketListener
 
     private void ReceiveMessage(Socket clientSocket)
     {
+        User? user = null;
         // Send ACK to client, so it knows that it can send messages
         AckCommand ackCommand = new();
-        clientSocket.Send(Encoding.ASCII.GetBytes(ackCommand.GetCommandToSend(string.Empty)));
+        clientSocket.Send(Encoding.ASCII.GetBytes(ackCommand.GetCommandResponse(string.Empty)));
         while (true)
         {
             byte[] buffer = new byte[1024];
@@ -55,7 +56,11 @@ public class SocketListener
                 break;
             }
             Console.WriteLine($"Received {clientSocket.RemoteEndPoint}: {message}");
-            OnCommandReceived?.Invoke(this, new CommandReceivedEventArgs(clientSocket, message));
+            var eventArgs = new CommandReceivedEventArgs(clientSocket, message, user);
+            OnCommandReceived?.Invoke(this, eventArgs);
+            // if user is not set, it means that it is a new user
+            // first message from a client is always a nickname
+            user = eventArgs.User;
         }
     }
 

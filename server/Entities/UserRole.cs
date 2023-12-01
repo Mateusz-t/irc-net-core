@@ -1,4 +1,4 @@
-namespace IrcNetCoreServer;
+namespace IrcNetCoreServer.Entities;
 
 public enum UserRole
 {

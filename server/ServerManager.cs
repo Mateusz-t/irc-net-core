@@ -1,5 +1,5 @@
 using System.Text;
-using IrcNetCore.Common.Commands;
+using IrcNetCoreServer.Commands;
 using IrcNetCoreServer.Events;
 
 namespace IrcNetCoreServer;
@@ -20,19 +20,24 @@ public class ServerManager
 
     public void ProcessCommand(object? sender, CommandReceivedEventArgs e)
     {
-        string response = GetCommandResponse(e.Command);
+        string response = GetCommandResponse(e);
         byte[] encodedCommand = Encoding.ASCII.GetBytes(response);
         e.ClientSocket.Send(encodedCommand);
-        Console.WriteLine($"Send {e.ClientSocket.RemoteEndPoint}: {e.Command} {response}");
+        Console.WriteLine($"Send {e.ClientSocket.RemoteEndPoint}: {response}");
     }
 
-    public string GetCommandResponse(string commandMessage)
+    public string GetCommandResponse(CommandReceivedEventArgs e)
     {
         if (_socketListener == null)
             throw new Exception("Socket listener is not initialized!");
 
-        CommandFactory commandFactory = new(_channelManager.GetChannelsList());
-        ICommand command = commandFactory.GetCommand(commandMessage);
-        return command.GetCommandResponse(commandMessage);
+        List<string> splittedCommand = e.Command.Split(' ').ToList();
+        string commandName = splittedCommand[0];
+        string commandParameters = string.Join(" ", splittedCommand.Skip(1));
+
+        CommandFactory commandFactory = new(_channelManager, e);
+        ICommand command = commandFactory.GetCommand(commandName);
+        command.ProcessCommand(commandParameters);
+        return command.GetCommandResponse(commandParameters);
     }
 }

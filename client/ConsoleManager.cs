@@ -1,4 +1,5 @@
-using IrcNetCore.Common.Commands;
+using IrcNetCore.Common;
+using IrcNetCoreClient.Commands;
 using Spectre.Console;
 
 namespace IrcNetCoreClient
@@ -27,14 +28,44 @@ namespace IrcNetCoreClient
             AnsiConsole.Markup($"[red](ERROR): {message}[/]\n");
         }
 
-        public static string WriteMenuAndGetSelectedOption()
+        public static string AskForUsername()
         {
+            return AnsiConsole.Ask<string>("Enter username:");
+        }
+
+        public static string WriteMenuAndGetSelectedOption(IEnumerable<string> options)
+        {
+            options = options.Append("Exit");
             return AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[underline blue]Menu[/]")
                     .PageSize(10)
-                    .AddChoices(new[] { "Join channel", ChannelListCommand.MenuText, "Send message", "Exit" })
+                    .AddChoices(options)
             );
+        }
+
+        public static string AskForChannelName()
+        {
+            return AnsiConsole.Ask<string>("Enter channel name:");
+        }
+
+        public static void WriteChannelMessage(string channelName)
+        {
+            var rule = new Rule($"[underline blue]{channelName}[/]");
+            AnsiConsole.Write(rule);
+            AnsiConsole.Markup($"[green]To see commands write /help[/]\n");
+        }
+
+        public static void ShowChannelHelp()
+        {
+            AnsiConsole.Markup($"[fuchsia]- To see commands write /help[/]\n");
+            AnsiConsole.Markup($"[fuchsia]- To close channel write /close[/]\n");
+            AnsiConsole.Markup($"[fuchsia]- To exit channel write /exit[/]\n");
+        }
+
+        public static string AskForMessage()
+        {
+            return AnsiConsole.Ask<string>("Enter message:");
         }
     }
 }
