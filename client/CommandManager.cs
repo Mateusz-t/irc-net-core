@@ -1,32 +1,27 @@
-
-
-using System.ComponentModel;
 using IrcNetCoreClient.Commands;
 
-namespace IrcNetCoreClient
+namespace IrcNetCoreClient;
+
+public class CommandManager
 {
-    public class CommandManager
+    private SocketManager _socketManager;
+
+    public CommandManager(SocketManager socketManager)
     {
-        private SocketManager _socketManager;
+        _socketManager = socketManager;
 
-        public CommandManager(SocketManager socketManager)
-        {
-            _socketManager = socketManager;
-
-        }
-
-
-        public void SendCommandAndProcess(ICommand command)
-        {
-            SendCommand(command);
-            string response = _socketManager.ReceiveMessage();
-            command.ProcessResponse(response);
-        }
-
-        public void SendCommand(ICommand command)
-        {
-            _socketManager.SendMessage(command.GetCommandRequest());
-        }
     }
 
+
+    public void SendCommandAndProcess(ICommand command)
+    {
+        SendCommand(command);
+        string response = _socketManager.ReceiveMessage();
+        command.ProcessResponse(response);
+    }
+
+    public void SendCommand(ICommand command)
+    {
+        _socketManager.SendMessage(command.GetCommandRequest());
+    }
 }

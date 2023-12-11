@@ -1,6 +1,4 @@
-using IrcNetCore.Common;
 using IrcNetCoreServer.Entities;
-using IrcNetCoreServer.Events;
 
 namespace IrcNetCoreServer.Commands;
 

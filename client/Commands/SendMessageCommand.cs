@@ -1,5 +1,4 @@
 using IrcNetCore.Common;
-using Spectre.Console;
 
 namespace IrcNetCoreClient.Commands;
 
