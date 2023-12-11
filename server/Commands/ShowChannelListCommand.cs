@@ -1,3 +1,5 @@
+using IrcNetCore.Common;
+
 namespace IrcNetCoreServer.Commands;
 
 public class ShowChannelListCommand : ICommand
@@ -10,7 +12,7 @@ public class ShowChannelListCommand : ICommand
     }
     public string GetCommandResponse(string parameters)
     {
-        return string.Join(";", _channelManager.GetChannelsList());
+        return $"{CommandsNames.ShowChannelListCommand} {_channelManager.GetChannelsList()}";
     }
 
     public void ProcessCommand(string parameters)

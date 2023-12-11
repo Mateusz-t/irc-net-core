@@ -5,9 +5,14 @@ namespace IrcNetCoreClient.Commands;
 
 public class ExitChannelCommand : ICommand
 {
-    public string GetCommandRequest(string channelName)
+    private string _channelName;
+    public ExitChannelCommand(string channelName)
     {
-        return $"{CommandsNames.ExitChannelCommand} {channelName}";
+        _channelName = channelName;
+    }
+    public string GetCommandRequest()
+    {
+        return $"{CommandsNames.ExitChannelCommand} {_channelName}";
     }
 
     public void ProcessResponse(string response)

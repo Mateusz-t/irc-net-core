@@ -5,9 +5,14 @@ namespace IrcNetCoreClient.Commands;
 
 public class JoinChannelCommand : ICommand
 {
-    public string GetCommandRequest(string channelName)
+    private string _channelName;
+    public JoinChannelCommand(string channelName)
     {
-        return $"{CommandsNames.JoinChannelCommand} {channelName}";
+        _channelName = channelName;
+    }
+    public string GetCommandRequest()
+    {
+        return $"{CommandsNames.JoinChannelCommand} {_channelName}";
     }
 
     public void ProcessResponse(string response)

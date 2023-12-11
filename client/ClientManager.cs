@@ -6,9 +6,20 @@ namespace IrcNetCoreClient
 {
     public class ClientManager
     {
-        private const int PORT = 12345;
+        private const int COMMAND_PORT = 50000;
+        private const int MESSAGE_PORT = 50001;
         private const string IP_ADDRESS = "127.0.0.1";
-        private SocketManager? _socketManager;
+        private SocketManager _commandSocketManager;
+        private CommandManager _commandManager;
+
+        public ClientManager()
+        {
+            ConsoleManager.WriteInitializationMessage();
+            _commandSocketManager = new(IP_ADDRESS, COMMAND_PORT);
+            _commandSocketManager.Connect();
+            _commandManager = new(_commandSocketManager);
+        }
+
         public void Run()
         {
             try
@@ -23,11 +34,6 @@ namespace IrcNetCoreClient
 
         private void RunInternal()
         {
-            ConsoleManager.WriteInitializationMessage();
-            if (!CreateSocket())
-            {
-                return;
-            }
             WaitForInitialAck();
             Login();
             ConsoleManager.WriteWelcomeMessage();
@@ -38,27 +44,11 @@ namespace IrcNetCoreClient
         {
             while (ShowMenu()) ;
         }
-
-        private bool CreateSocket()
-        {
-            _socketManager = new(IP_ADDRESS, PORT);
-            try
-            {
-                _socketManager.Connect();
-                return true;
-            }
-            catch (SocketException)
-            {
-                ConsoleManager.WriteErrorMessage("Could not connect to a server!");
-                return false;
-            }
-        }
-
         private void WaitForInitialAck()
         {
-            if (_socketManager == null)
+            if (_commandSocketManager == null)
                 throw new Exception("Socket is not initialized!");
-            string message = _socketManager.ReceiveMessage();
+            string message = _commandSocketManager.ReceiveMessage();
             if (message != CommandsNames.AckCommand)
                 throw new Exception("Initial ACK not received!");
             ConsoleManager.WriteInfoMessage("Initial ACK received.");
@@ -93,48 +83,57 @@ namespace IrcNetCoreClient
         private void Login()
         {
             string username = ConsoleManager.AskForUsername();
-            LoginCommand loginCommand = new();
-            SendCommand(loginCommand, username);
+            _commandManager.SendCommandAndProcess(new LoginCommand(username));
         }
 
         private void JoinChannel()
         {
             string channelName = ConsoleManager.AskForChannelName();
-            JoinChannelCommand joinChannelCommand = new();
-            SendCommand(joinChannelCommand, channelName);
+            _commandManager.SendCommandAndProcess(new JoinChannelCommand(channelName));
             StartChannelLoop(channelName);
         }
 
         private void StartChannelLoop(string channelName)
         {
             ConsoleManager.WriteChannelMessage(channelName);
-            // Thread thread = new(WaitForMessage);
-            // thread.Start();
+            _commandManager.SendCommandAndProcess(new ShowChannelMessagesCommand(channelName));
+            SocketManager messageSocketManager = new(IP_ADDRESS, MESSAGE_PORT);
+            messageSocketManager.Connect();
+            CommandManager messageCommandManager = new(messageSocketManager);
+            messageCommandManager.SendCommand(new JoinChannelCommand(channelName));
+            var tokenSource = new CancellationTokenSource();
+            CancellationToken token = tokenSource.Token;
+            Task task = Task.Run(() => ReceiveMessages(messageSocketManager), token);
             while (ShowChannelMenu(channelName)) ;
+            tokenSource.Cancel();
         }
 
-        private void WaitForMessage()
+        private void ReceiveMessages(SocketManager socketManager)
         {
-            if (_socketManager == null)
-                throw new Exception("Socket is not initialized!");
             while (true)
             {
-                string message = _socketManager.ReceiveMessage();
-                Console.WriteLine(message);
+                string message = socketManager.ReceiveMessage();
+                NotifyChannelUsersCommand notifyChannelUsersCommand = new();
+                notifyChannelUsersCommand.ProcessResponse(message);
             }
         }
+
 
         private bool ShowChannelMenu(string channelName)
         {
             string message = ConsoleManager.AskForMessage();
-            if (message == "/close")
+            if (message == "/users")
+            {
+                _commandManager.SendCommandAndProcess(new ShowChannelUsersCommand(channelName));
+                return true;
+            }
+            else if (message == "/close")
             {
                 return false;
             }
             else if (message == "/exit")
             {
-                ExitChannelCommand exitChannelCommand = new();
-                SendCommand(exitChannelCommand, channelName);
+                _commandManager.SendCommandAndProcess(new ExitChannelCommand(channelName));
                 return false;
             }
             else if (message == "/help")
@@ -144,24 +143,14 @@ namespace IrcNetCoreClient
             }
             else
             {
-                SendMessageCommand sendMessageCommand = new();
-                SendCommand(sendMessageCommand, $"{channelName} {message}");
+                _commandManager.SendCommandAndProcess(new SendMessageCommand(channelName, message));
                 return true;
             }
         }
+
         private void ShowChannelsList()
         {
-            ShowChannelListCommand channelListCommand = new();
-            SendCommand(channelListCommand);
-        }
-
-        private void SendCommand(ICommand command, string? message = null)
-        {
-            if (_socketManager == null)
-                throw new Exception("Socket is not initialized!");
-            _socketManager.SendMessage(command.GetCommandRequest(message ?? string.Empty));
-            string response = _socketManager.ReceiveMessage();
-            command.ProcessResponse(response);
+            _commandManager.SendCommandAndProcess(new ShowChannelListCommand());
         }
     }
 }

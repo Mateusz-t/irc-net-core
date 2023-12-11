@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text;
 using IrcNetCore.Common;
 using IrcNetCoreServer.Entities;
@@ -21,11 +22,17 @@ public class ChannelManager
         }
     }
 
+    public void StartListeningToChannel(string channelName, Socket socket)
+    {
+        var foundChannel = GetChannel(channelName);
+        foundChannel.ListeningSockets.Add(socket);
+    }
+
     public string GetChannelMessages(string channelName)
     {
         var foundChannel = GetChannel(channelName);
         var messages = foundChannel.Messages;
-        var messagesString = string.Join(";", messages.Select(a => $"{a.User.Username}: {a.Text}"));
+        var messagesString = string.Join(";", messages.Select(a => $"{a.FormattedMessage}"));
         return messagesString;
     }
 
@@ -43,16 +50,18 @@ public class ChannelManager
         var foundUserWithRole = GetUserWithRole(foundChannel, user);
         Message createdMessage = new(message, foundUserWithRole.User);
         foundChannel.SendMessage(createdMessage);
-        SendMessageToOtherUsersConnectedToChannel(foundChannel, createdMessage);
+        SendMessageToUsersConnectedToChannel(foundChannel, createdMessage);
     }
 
-    public void SendMessageToOtherUsersConnectedToChannel(Channel foundChannel, Message createdMessage)
+    public void SendMessageToUsersConnectedToChannel(Channel foundChannel, Message createdMessage)
     {
-        var otherUsers = foundChannel.UsersWithRoles.Where(a => a.User.Id != createdMessage.User.Id);
-        foreach (var otherUser in otherUsers)
+        foreach (var socket in foundChannel.ListeningSockets)
         {
-            byte[] encodedMessage = Encoding.UTF8.GetBytes($"{CommandsNames.NotifyChannelUsersCommand} {createdMessage.FormattedMessage}");
-            otherUser.User.Socket.Send(encodedMessage);
+            string message = $"{CommandsNames.NotifyChannelUsersCommand} {createdMessage.FormattedMessage}";
+            byte[] encodedMessage = Encoding.ASCII.GetBytes(message);
+            socket.Send(encodedMessage);
+            Console.WriteLine($"(MessageSocket) Send {socket.RemoteEndPoint}: {message}");
+
         }
     }
 
@@ -77,9 +86,10 @@ public class ChannelManager
         foundUserToPromoteWithRole.Role = roleToPromoteTo;
     }
 
-    public List<string> GetChannelsList()
+    public string GetChannelsList()
     {
-        return _channels.Keys.ToList();
+        var channelsString = string.Join(";", _channels.Keys);
+        return channelsString;
     }
 
     private void RemoveUserFromChannel(Channel channel, UserWithRole userWithRole)

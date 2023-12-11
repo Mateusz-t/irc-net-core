@@ -2,6 +2,6 @@ namespace IrcNetCoreClient.Commands;
 
 public interface ICommand
 {
-    string GetCommandRequest(string parameters);
+    string GetCommandRequest();
     void ProcessResponse(string response);
 }

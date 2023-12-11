@@ -5,13 +5,20 @@ namespace IrcNetCoreClient.Commands;
 
 public class SendMessageCommand : ICommand
 {
-    public string GetCommandRequest(string parameters)
+    private string _channelName;
+    private string _message;
+    public SendMessageCommand(string channelName, string message)
     {
-        return $"{CommandsNames.SendMessageCommand} {parameters}";
+        _channelName = channelName;
+        _message = message;
+    }
+    public string GetCommandRequest()
+    {
+        return $"{CommandsNames.SendMessageCommand} {_channelName} {_message}";
     }
 
     public void ProcessResponse(string response)
     {
-        AnsiConsole.Markup($"[green]{response}[/]\n");
+        return;
     }
 }

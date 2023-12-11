@@ -28,6 +28,7 @@ public class CommandFactory
             CommandsNames.ExitChannelCommand => new ExitChannelCommand(_commandReceivedEventArgs.User, _channelManager),
             CommandsNames.SendMessageCommand => new SendMessageCommand(_commandReceivedEventArgs.User, _channelManager),
             CommandsNames.ShowChannelUsersCommand => new ShowChannelUsersCommand(_channelManager),
+            CommandsNames.ShowChannelMessagesCommand => new ShowChannelMessagesCommand(_channelManager),
             _ => throw new Exception("Unknown command!")
         };
     }

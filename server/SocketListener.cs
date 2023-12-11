@@ -9,41 +9,46 @@ namespace IrcNetCoreServer;
 
 public class SocketListener
 {
-    private readonly string _IpAddress;
-    private readonly int _Port;
+    private readonly string _name;
+    private readonly string _ipAddress;
+    private readonly int _port;
     public event EventHandler<CommandReceivedEventArgs>? OnCommandReceived;
-    public SocketListener(string ipAddress, int port)
+    public SocketListener(string name, string ipAddress, int port)
     {
-        _IpAddress = ipAddress;
-        _Port = port;
+        _name = name;
+        _ipAddress = ipAddress;
+        _port = port;
     }
 
-    public void Start()
+    public void Start(bool sendAck = false)
     {
         Socket listenerSocket = CreateSocket();
-        Thread thread = new(() => ListenForClients(listenerSocket));
+        Thread thread = new(() => ListenForClients(listenerSocket, sendAck));
         thread.Start();
     }
 
-    private void ListenForClients(Socket listenerSocket)
+    private void ListenForClients(Socket listenerSocket, bool sendAck = false)
     {
-        Console.WriteLine("Waiting for clients...");
+        Console.WriteLine($"({_name}) Waiting for clients...");
         while (true)
         {
             var clientSocket = listenerSocket.Accept();
-            Console.WriteLine($"Client {clientSocket.RemoteEndPoint} connected.");
+            Console.WriteLine($"({_name}) Client {clientSocket.RemoteEndPoint} connected.");
             //create a new thread to receive messages from the client
-            Thread thread = new(() => ReceiveMessage(clientSocket));
+            Thread thread = new(() => ReceiveMessage(clientSocket, sendAck));
             thread.Start();
         }
     }
 
-    private void ReceiveMessage(Socket clientSocket)
+    private void ReceiveMessage(Socket clientSocket, bool sendAck = false)
     {
         User? user = null;
         // Send ACK to client, so it knows that it can send messages
-        AckCommand ackCommand = new();
-        clientSocket.Send(Encoding.ASCII.GetBytes(ackCommand.GetCommandResponse(string.Empty)));
+        if (sendAck)
+        {
+            AckCommand ackCommand = new();
+            clientSocket.Send(Encoding.ASCII.GetBytes(ackCommand.GetCommandResponse(string.Empty)));
+        }
         while (true)
         {
             byte[] buffer = new byte[1024];
@@ -52,10 +57,10 @@ public class SocketListener
 
             if (!IsConnected(clientSocket))
             {
-                Console.WriteLine($"Client {clientSocket.RemoteEndPoint} disconnected.");
+                Console.WriteLine($"({_name}) Client {clientSocket.RemoteEndPoint} disconnected.");
                 break;
             }
-            Console.WriteLine($"Received {clientSocket.RemoteEndPoint}: {message}");
+            Console.WriteLine($"({_name}) Received {clientSocket.RemoteEndPoint}: {message}");
             var eventArgs = new CommandReceivedEventArgs(clientSocket, message, user);
             OnCommandReceived?.Invoke(this, eventArgs);
             // if user is not set, it means that it is a new user
@@ -78,13 +83,13 @@ public class SocketListener
 
     private Socket CreateSocket()
     {
-        Console.WriteLine("Creating socket...");
+        Console.WriteLine($"({_name}) Creating socket...");
         Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        IPAddress iPAddress = IPAddress.Parse(_IpAddress);
-        IPEndPoint iPEndPoint = new(iPAddress, _Port);
+        IPAddress iPAddress = IPAddress.Parse(_ipAddress);
+        IPEndPoint iPEndPoint = new(iPAddress, _port);
         socket.Bind(iPEndPoint);
         socket.Listen(5);
-        Console.WriteLine("Socket created.");
+        Console.WriteLine($"({_name}) Socket created.");
         return socket;
     }
 }

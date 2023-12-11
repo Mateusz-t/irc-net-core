@@ -4,9 +4,14 @@ namespace IrcNetCoreClient.Commands;
 
 public class LoginCommand : ICommand
 {
-    public string GetCommandRequest(string username)
+    private string _username;
+    public LoginCommand(string username)
     {
-        return $"{CommandsNames.LoginCommand} {username}";
+        _username = username;
+    }
+    public string GetCommandRequest()
+    {
+        return $"{CommandsNames.LoginCommand} {_username}";
     }
 
     public void ProcessResponse(string response)

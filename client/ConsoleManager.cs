@@ -59,13 +59,22 @@ namespace IrcNetCoreClient
         public static void ShowChannelHelp()
         {
             AnsiConsole.Markup($"[fuchsia]- To see commands write /help[/]\n");
+            AnsiConsole.Markup($"[fuchsia]- To see channel users list /users[/]\n");
             AnsiConsole.Markup($"[fuchsia]- To close channel write /close[/]\n");
             AnsiConsole.Markup($"[fuchsia]- To exit channel write /exit[/]\n");
         }
 
         public static string AskForMessage()
         {
-            return AnsiConsole.Ask<string>("Enter message:");
+            string? message = null;
+            while (message == null)
+            {
+                message = Console.ReadLine();
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+            }
+            return message;
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using IrcNetCoreClient.Commands;
 
 namespace IrcNetCoreClient
 {
@@ -29,8 +30,6 @@ namespace IrcNetCoreClient
 
             byte[] messageBytes = Encoding.ASCII.GetBytes(message);
             _clientSocket.Send(messageBytes);
-            //temp
-            Console.WriteLine($"Message sent: {message}");
         }
 
         public string ReceiveMessage()
@@ -40,8 +39,6 @@ namespace IrcNetCoreClient
             byte[] buffer = new byte[1024];
             int receivedBytes = _clientSocket.Receive(buffer);
             string message = Encoding.ASCII.GetString(buffer, 0, receivedBytes).Trim();
-            //temp
-            Console.WriteLine($"Message received: {message}");
             return message;
         }
 
@@ -54,8 +51,6 @@ namespace IrcNetCoreClient
             ConsoleManager.WriteInfoMessage("Socket created.");
             return clientSocket;
         }
-
-
     }
 }
 
