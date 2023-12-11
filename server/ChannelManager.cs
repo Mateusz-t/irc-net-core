@@ -9,17 +9,20 @@ public class ChannelManager
 {
     private readonly Dictionary<string, Channel> _channels = new();
 
-    public void JoinOrCreateChannel(string channelName, User user)
+    public string JoinOrCreateChannel(string channelName, User user)
     {
         var foundChannel = _channels.SingleOrDefault(a => a.Key == channelName).Value;
         if (foundChannel == null)
         {
             _channels.Add(channelName, new Channel(channelName, user));
+            return channelName;
         }
-        else if (!foundChannel.UsersWithRoles.Any(a => a.User.Id == user.Id))
+        else if (!foundChannel.UsersWithRoles.Any(a => a.User.Username == user.Username))
         {
             foundChannel.UsersWithRoles.Add(new UserWithRole(user, UserRole.User));
+            return channelName;
         }
+        return String.Empty;
     }
 
     public void StartListeningToChannel(string channelName, Socket socket)
@@ -47,13 +50,13 @@ public class ChannelManager
     public void SendMessageToChannel(string channelName, User user, string message)
     {
         var foundChannel = GetChannel(channelName);
-        var foundUserWithRole = GetUserWithRole(foundChannel, user);
+        var foundUserWithRole = GetUserWithRole(foundChannel, user.Username);
         Message createdMessage = new(message, foundUserWithRole.User);
         foundChannel.SendMessage(createdMessage);
         SendMessageToUsersConnectedToChannel(foundChannel, createdMessage);
     }
 
-    public void SendMessageToUsersConnectedToChannel(Channel foundChannel, Message createdMessage)
+    public static void SendMessageToUsersConnectedToChannel(Channel foundChannel, Message createdMessage)
     {
         foreach (var socket in foundChannel.ListeningSockets)
         {
@@ -61,29 +64,38 @@ public class ChannelManager
             byte[] encodedMessage = Encoding.ASCII.GetBytes(message);
             socket.Send(encodedMessage);
             Console.WriteLine($"(MessageSocket) Send {socket.RemoteEndPoint}: {message}");
-
         }
     }
 
     public void RemoveUserFromChannel(string channelName, User user)
     {
         var foundChannel = GetChannel(channelName);
-        var foundUserWithRole = GetUserWithRole(foundChannel, user);
+        var foundUserWithRole = GetUserWithRole(foundChannel, user.Username);
 
         RemoveUserFromChannel(foundChannel, foundUserWithRole);
     }
 
-    public void PromoteUser(string channelName, User promotingUser, User userToPromote, UserRole roleToPromoteTo)
+    public string PromoteUser(string channelName, User promotingUser, string usernameToPromote)
     {
+        if (promotingUser.Username == usernameToPromote)
+        {
+            throw new Exception($"User {promotingUser.Username} cannot promote himself");
+        }
         var foundChannel = GetChannel(channelName);
-        var foundPromotingUserWithRole = GetUserWithRole(foundChannel, promotingUser);
+        var foundPromotingUserWithRole = GetUserWithRole(foundChannel, promotingUser.Username);
         if (foundPromotingUserWithRole.Role != UserRole.Admin)
         {
             throw new Exception($"User {promotingUser.Username} is not an admin in channel {channelName}");
         }
 
-        var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, userToPromote);
-        foundUserToPromoteWithRole.Role = roleToPromoteTo;
+        var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, usernameToPromote);
+        foundUserToPromoteWithRole.Role += 1;
+        if (foundUserToPromoteWithRole.Role == UserRole.Admin)
+        {
+            // only one admin is allowed
+            foundPromotingUserWithRole.Role = UserRole.Moderator;
+        }
+        return foundUserToPromoteWithRole.Role.ToString();
     }
 
     public string GetChannelsList()
@@ -115,15 +127,17 @@ public class ChannelManager
 
     private Channel GetChannel(string channelName)
     {
-        var foundChannel = _channels[channelName]
+        var foundChannel = _channels.SingleOrDefault(a => a.Key == channelName).Value
             ?? throw new Exception($"Channel {channelName} does not exist");
         return foundChannel;
     }
 
-    private static UserWithRole GetUserWithRole(Channel channel, User user)
+
+
+    private static UserWithRole GetUserWithRole(Channel channel, string username)
     {
-        var foundUserWithRole = channel.UsersWithRoles.SingleOrDefault(a => a.User.Id == user.Id)
-            ?? throw new Exception($"User {user.Username} is not in channel {channel.Name}");
+        var foundUserWithRole = channel.UsersWithRoles.SingleOrDefault(a => a.User.Username == username)
+            ?? throw new Exception($"User {username} is not in channel {channel.Name}");
         return foundUserWithRole;
     }
 }

@@ -88,8 +88,12 @@ public class ClientManager
     private void JoinChannel()
     {
         string channelName = ConsoleManager.AskForChannelName();
-        _commandManager.SendCommandAndProcess(new JoinChannelCommand(channelName));
-        StartChannelLoop(channelName);
+        var joinChannelCommand = new JoinChannelCommand(channelName);
+        _commandManager.SendCommandAndProcess(joinChannelCommand);
+        if (joinChannelCommand.Result)
+        {
+            StartChannelLoop(channelName);
+        }
     }
 
     private void StartChannelLoop(string channelName)
@@ -124,6 +128,17 @@ public class ClientManager
         if (message == "/users")
         {
             _commandManager.SendCommandAndProcess(new ShowChannelUsersCommand(channelName));
+            return true;
+        }
+        else if (message.StartsWith("/promote"))
+        {
+            if (message.Length < 10)
+            {
+                ConsoleManager.WriteErrorMessage("Invalid command!");
+                return true;
+            }
+            string username = message.Remove(0, 9);
+            _commandManager.SendCommandAndProcess(new PromoteUserCommand(channelName, username));
             return true;
         }
         else if (message == "/close")

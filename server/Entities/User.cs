@@ -10,7 +10,6 @@ public class User
         Socket = socket;
     }
 
-    public Guid Id { get; private set; } = Guid.NewGuid();
     public string Username { get; set; }
     public Socket Socket { get; set; }
 }

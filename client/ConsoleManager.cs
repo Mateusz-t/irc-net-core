@@ -58,6 +58,7 @@ public class ConsoleManager
     {
         AnsiConsole.Markup($"[fuchsia]- To see commands write /help[/]\n");
         AnsiConsole.Markup($"[fuchsia]- To see channel users list /users[/]\n");
+        AnsiConsole.Markup($"[fuchsia]- To promote user /promote (username)[/]\n");
         AnsiConsole.Markup($"[fuchsia]- To close channel write /close[/]\n");
         AnsiConsole.Markup($"[fuchsia]- To exit channel write /exit[/]\n");
     }

@@ -11,4 +11,5 @@ public class CommandsNames
     public const string ShowChannelMessagesCommand = "/messages";
     public const string ShowChannelUsersCommand = "/users";
     public const string NotifyChannelUsersCommand = "/notify";
+    public const string PromoteUserCommand = "/promote";
 }
