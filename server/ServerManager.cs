@@ -15,8 +15,8 @@ public class ServerManager
 
     public ServerManager()
     {
-        _commandSocketListener = new("CommandSocket", IP_ADDRESS, COMMAND_PORT);
-        _messageSocketListener = new("MessageSocket", IP_ADDRESS, MESSAGE_PORT);
+        _commandSocketListener = new("CommandSocket", IP_ADDRESS, COMMAND_PORT, _channelManager);
+        _messageSocketListener = new("MessageSocket", IP_ADDRESS, MESSAGE_PORT, _channelManager);
     }
     public void Run()
     {

@@ -13,11 +13,13 @@ public class SocketListener
     private readonly string _ipAddress;
     private readonly int _port;
     public event EventHandler<CommandReceivedEventArgs>? OnCommandReceived;
-    public SocketListener(string name, string ipAddress, int port)
+    private readonly ChannelManager _channelManager;
+    public SocketListener(string name, string ipAddress, int port, ChannelManager channelManager)
     {
         _name = name;
         _ipAddress = ipAddress;
         _port = port;
+        _channelManager = channelManager;
     }
 
     public void Start(bool sendAck = false)
@@ -58,6 +60,7 @@ public class SocketListener
             if (!IsConnected(clientSocket))
             {
                 Console.WriteLine($"({_name}) Client {clientSocket.RemoteEndPoint} disconnected.");
+                _channelManager.StopListeningOnSocket(clientSocket);
                 break;
             }
             Console.WriteLine($"({_name}) Received {clientSocket.RemoteEndPoint}: {message}");

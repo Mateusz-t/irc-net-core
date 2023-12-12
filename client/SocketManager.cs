@@ -21,6 +21,10 @@ public class SocketManager
         _clientSocket.Connect(_IpAddress, _Port);
     }
 
+    public void Close()
+    {
+        _clientSocket?.Close();
+    }
     public void SendMessage(string message)
     {
         if (_clientSocket == null)

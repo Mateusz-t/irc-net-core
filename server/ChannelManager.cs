@@ -31,6 +31,14 @@ public class ChannelManager
         foundChannel.ListeningSockets.Add(socket);
     }
 
+    public void StopListeningOnSocket(Socket socket)
+    {
+        foreach (var channel in _channels.Values)
+        {
+            channel.ListeningSockets.Remove(socket);
+        }
+    }
+
     public string GetChannelMessages(string channelName)
     {
         var foundChannel = GetChannel(channelName);

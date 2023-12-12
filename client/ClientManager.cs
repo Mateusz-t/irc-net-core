@@ -109,6 +109,7 @@ public class ClientManager
         Task task = Task.Run(() => ReceiveMessages(messageSocketManager), token);
         while (ShowChannelMenu(channelName)) ;
         tokenSource.Cancel();
+        messageSocketManager.Close();
     }
 
     private void ReceiveMessages(SocketManager socketManager)
