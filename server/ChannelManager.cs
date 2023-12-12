@@ -90,12 +90,39 @@ public class ChannelManager
 
         var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, usernameToPromote);
         foundUserToPromoteWithRole.Role += 1;
+        if (foundUserToPromoteWithRole.Role > UserRole.Admin)
+        {
+            foundPromotingUserWithRole.Role = UserRole.Admin;
+        }
         if (foundUserToPromoteWithRole.Role == UserRole.Admin)
         {
             // only one admin is allowed
             foundPromotingUserWithRole.Role = UserRole.Moderator;
         }
         return foundUserToPromoteWithRole.Role.ToString();
+    }
+
+    public string DemoteUser(string channelName, User demotingUser, string usernameToDemote)
+    {
+        if (demotingUser.Username == usernameToDemote)
+        {
+            throw new Exception($"User {demotingUser.Username} cannot demote himself");
+        }
+        var foundChannel = GetChannel(channelName);
+        var foundDemotingUserWithRole = GetUserWithRole(foundChannel, demotingUser.Username);
+        if (foundDemotingUserWithRole.Role != UserRole.Admin)
+        {
+            throw new Exception($"User {demotingUser.Username} is not an admin in channel {channelName}");
+        }
+        Console.WriteLine($"{foundChannel} {usernameToDemote}");
+        var foundUserToDemoteWithRole = GetUserWithRole(foundChannel, usernameToDemote);
+        Console.WriteLine(2);
+        foundUserToDemoteWithRole.Role -= 1;
+        if (foundUserToDemoteWithRole.Role < UserRole.User)
+        {
+            foundUserToDemoteWithRole.Role = UserRole.User;
+        }
+        return foundUserToDemoteWithRole.Role.ToString();
     }
 
     public string GetChannelsList()

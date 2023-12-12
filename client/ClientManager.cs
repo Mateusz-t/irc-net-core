@@ -141,6 +141,17 @@ public class ClientManager
             _commandManager.SendCommandAndProcess(new PromoteUserCommand(channelName, username));
             return true;
         }
+        else if (message.StartsWith("/demote"))
+        {
+            if (message.Length < 10)
+            {
+                ConsoleManager.WriteErrorMessage("Invalid command!");
+                return true;
+            }
+            string username = message.Remove(0, 8);
+            _commandManager.SendCommandAndProcess(new DemoteUserCommand(channelName, username));
+            return true;
+        }
         else if (message == "/close")
         {
             return false;
