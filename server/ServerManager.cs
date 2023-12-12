@@ -1,6 +1,7 @@
 using System.Text;
 using IrcNetCoreServer.Commands;
 using IrcNetCoreServer.Events;
+using IrcNetCore.Common;
 
 namespace IrcNetCoreServer;
 
@@ -28,14 +29,17 @@ public class ServerManager
 
     public void ProcessCommand(object? sender, CommandReceivedEventArgs e)
     {
+        // get client command and always send response
         string response = GetCommandResponse(e);
-        byte[] encodedCommand = Encoding.ASCII.GetBytes(response);
-        e.ClientSocket.Send(encodedCommand);
+        e.ClientSocket.EncodeAndSend(response);
         Console.WriteLine($"(CommandSocket) Send {e.ClientSocket.RemoteEndPoint}: {response}");
     }
 
     public void ProcessMessage(object? sender, CommandReceivedEventArgs e)
     {
+        // client sends this command when joining a server,
+        // socket is created and only server is sending messages after that
+        // listening is stopped when client closes the message socket
         List<string> splittedCommand = e.Command.Split(' ').ToList();
         string channelName = splittedCommand[1];
         _channelManager.StartListeningToChannel(channelName, e.ClientSocket);
@@ -50,7 +54,15 @@ public class ServerManager
 
         CommandFactory commandFactory = new(_channelManager, e);
         ICommand command = commandFactory.GetCommand(commandName);
-        command.ProcessCommand(commandParameters);
-        return command.GetCommandResponse(commandParameters);
+        try
+        {
+            command.ProcessCommand(commandParameters);
+            return command.GetCommandResponse(commandParameters);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return commandName;
+        }
     }
 }

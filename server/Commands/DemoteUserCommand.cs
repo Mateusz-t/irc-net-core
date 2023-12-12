@@ -27,20 +27,10 @@ public class DemoteUserCommand : ICommand
         }
         string channelName = splittedParameters[0];
         string username = splittedParameters[1];
-        //write those in console
-        Console.WriteLine($"User demoted user {username} on channel {channelName}");
-
         if (_user == null)
         {
             throw new Exception("User is not set!");
         }
-        try
-        {
-            _result = _channelManager.DemoteUser(channelName, _user, username);
-        }
-        catch (Exception)
-        {
-            _result = String.Empty;
-        }
+        _result = _channelManager.DemoteUser(channelName, _user, username);
     }
 }

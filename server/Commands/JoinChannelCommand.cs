@@ -25,13 +25,6 @@ public class JoinChannelCommand : ICommand
             throw new Exception("User is not set!");
         }
         _result = _channelManager.JoinOrCreateChannel(channelName, _user);
-        if (_result != String.Empty)
-        {
-            Console.WriteLine($"User {_user.Username} joined channel {channelName}");
-        }
-        else
-        {
-            Console.WriteLine($"User {_user.Username} could not join channel {channelName}");
-        }
+
     }
 }

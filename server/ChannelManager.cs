@@ -15,13 +15,16 @@ public class ChannelManager
         if (foundChannel == null)
         {
             _channels.Add(channelName, new Channel(channelName, user));
+            Console.WriteLine($"User {user.Username} created channel {channelName}");
             return channelName;
         }
         else if (!foundChannel.UsersWithRoles.Any(a => a.User.Username == user.Username))
         {
             foundChannel.UsersWithRoles.Add(new UserWithRole(user, UserRole.User));
+            Console.WriteLine($"User {user.Username} joined channel {channelName}");
             return channelName;
         }
+        Console.WriteLine($"User {user.Username} could not join channel {channelName}");
         return String.Empty;
     }
 
@@ -98,15 +101,17 @@ public class ChannelManager
 
         var foundUserToPromoteWithRole = GetUserWithRole(foundChannel, usernameToPromote);
         foundUserToPromoteWithRole.Role += 1;
+        // admin is the highest role
         if (foundUserToPromoteWithRole.Role > UserRole.Admin)
         {
-            foundPromotingUserWithRole.Role = UserRole.Admin;
+            throw new Exception($"Cannot promote user {usernameToPromote} any further");
         }
         if (foundUserToPromoteWithRole.Role == UserRole.Admin)
         {
             // only one admin is allowed
             foundPromotingUserWithRole.Role = UserRole.Moderator;
         }
+        Console.WriteLine($"Promoted user {usernameToPromote} to {foundUserToPromoteWithRole.Role} on channel {channelName}");
         return foundUserToPromoteWithRole.Role.ToString();
     }
 
@@ -122,14 +127,15 @@ public class ChannelManager
         {
             throw new Exception($"User {demotingUser.Username} is not an admin in channel {channelName}");
         }
-        Console.WriteLine($"{foundChannel} {usernameToDemote}");
         var foundUserToDemoteWithRole = GetUserWithRole(foundChannel, usernameToDemote);
-        Console.WriteLine(2);
         foundUserToDemoteWithRole.Role -= 1;
+        // user is the lowest role
         if (foundUserToDemoteWithRole.Role < UserRole.User)
         {
-            foundUserToDemoteWithRole.Role = UserRole.User;
+            throw new Exception($"Cannot demote user {usernameToDemote} any further");
         }
+        Console.WriteLine($"Demoted user {usernameToDemote} to {foundUserToDemoteWithRole.Role} on channel {channelName}");
+
         return foundUserToDemoteWithRole.Role.ToString();
     }
 
@@ -166,8 +172,6 @@ public class ChannelManager
             ?? throw new Exception($"Channel {channelName} does not exist");
         return foundChannel;
     }
-
-
 
     private static UserWithRole GetUserWithRole(Channel channel, string username)
     {

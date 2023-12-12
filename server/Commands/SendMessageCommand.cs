@@ -22,7 +22,6 @@ public class SendMessageCommand : ICommand
         {
             throw new Exception("Invalid parameters!");
         }
-        string channelName = splittedParameters[0];
         string message = string.Join(" ", splittedParameters.Skip(1));
         return $"({_user.Username}, {DateTime.Now:HH:mm:ss}): {message}";
     }

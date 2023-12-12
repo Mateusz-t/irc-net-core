@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using IrcNetCore.Common;
 using IrcNetCoreServer.Commands;
 using IrcNetCoreServer.Entities;
 using IrcNetCoreServer.Events;
@@ -9,10 +9,15 @@ namespace IrcNetCoreServer;
 
 public class SocketListener
 {
+    // for logging purposes
     private readonly string _name;
+    // socket ip address
     private readonly string _ipAddress;
+    // socket port
     private readonly int _port;
+    // event that is invoked when a command is received
     public event EventHandler<CommandReceivedEventArgs>? OnCommandReceived;
+    // irc channel manager
     private readonly ChannelManager _channelManager;
     public SocketListener(string name, string ipAddress, int port, ChannelManager channelManager)
     {
@@ -22,6 +27,10 @@ public class SocketListener
         _channelManager = channelManager;
     }
 
+    /// <summary>
+    /// Starts listening for clients to connect
+    /// </summary>
+    /// <param name="sendAck">For command socket, so client knows when it can start sending commands</param>
     public void Start(bool sendAck = false)
     {
         Socket listenerSocket = CreateSocket();
@@ -34,6 +43,7 @@ public class SocketListener
         Console.WriteLine($"({_name}) Waiting for clients...");
         while (true)
         {
+            // accept client connection
             var clientSocket = listenerSocket.Accept();
             Console.WriteLine($"({_name}) Client {clientSocket.RemoteEndPoint} connected.");
             //create a new thread to receive messages from the client
@@ -45,17 +55,15 @@ public class SocketListener
     private void ReceiveMessage(Socket clientSocket, bool sendAck = false)
     {
         User? user = null;
-        // Send ACK to client, so it knows that it can send messages
         if (sendAck)
         {
-            AckCommand ackCommand = new();
-            clientSocket.Send(Encoding.ASCII.GetBytes(ackCommand.GetCommandResponse(string.Empty)));
+            // Send ACK to client, so it knows that it can send messages
+            clientSocket.EncodeAndSend(new AckCommand().GetCommandResponse(string.Empty));
         }
         while (true)
         {
-            byte[] buffer = new byte[1024];
-            int receivedBytes = clientSocket.Receive(buffer);
-            string message = Encoding.ASCII.GetString(buffer, 0, receivedBytes).Trim();
+            // wait for client to send a message
+            string message = clientSocket.ReceiveAndDecode();
 
             if (!IsConnected(clientSocket))
             {
